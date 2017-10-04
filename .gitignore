@@ -19,3 +19,5 @@ tfnet/yolo/*.parsed
 *.pb
 /profile
 /test.py
+
+test/

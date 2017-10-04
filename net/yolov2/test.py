@@ -84,15 +84,18 @@ def postprocess(self, net_out, im, save = True):
 					'"bottomright":{"x":%d,"y":%d}},\n') % \
 					(mess, confidence, left, top, right, bot)
 			textBuff += line
-			continue
 
 		cv2.rectangle(imgcv,
 			(left, top), (right, bot),
 			colors[max_indx], thick)
-		cv2.putText(imgcv, mess, (left, top - 12),
+		cv2.putText(imgcv, '{} ({:.2})'.format(mess,confidence), (left, top - 12),
 			0, 1e-3 * h, colors[max_indx],thick//3)
 
-	if not save: return imgcv
+	if not save: return imgcv, textBuff
+
+	outfolder = os.path.join(self.FLAGS.test, 'out')
+	img_name = os.path.join(outfolder, im.split('/')[-1])
+	
 	# Removing trailing comma+newline adding json list terminator.
 	textBuff = textBuff[:-2] + "]"
 	outfolder = os.path.join(self.FLAGS.test, 'out')

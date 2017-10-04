@@ -1,0 +1,1 @@
+python flow --model cfg\yolo.cfg --load bin\yolo.weights --json %1 %2

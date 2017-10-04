@@ -57,19 +57,36 @@ def load_old_graph(self, ckpt):
         self.sess.run(op, {plh: val})
 
 def camera(self, file):
-    camera = cv2.VideoCapture(0)
+    if os.path.isfile(file):
+        camera = cv2.VideoCapture(file)
+
+        outfolder = os.path.join(self.FLAGS.test, 'out')
+        basename = os.path.basename(file)
+        outvideo_name = os.path.join(outfolder, os.path.splitext(basename)[0] + '.avi')
+
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        fps = int(camera.get(cv2.CAP_PROP_FPS))
+        size = (int(camera.get(cv2.CAP_PROP_FRAME_WIDTH)), int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        print(outvideo_name)
+        outvideo = cv2.VideoWriter(outvideo_name, fourcc, fps, size)
+
+        outfolder = os.path.join(self.FLAGS.test, 'out', os.path.splitext(basename)[0])
+        os.mkdir(outfolder)
+    else:
+        camera = cv2.VideoCapture(0)
     self.say('Press [ESC] to quit demo')
     assert camera.isOpened(), \
     'Cannot capture source'
 
     elapsed = int()
     start = timer()
+    i = 0
     while camera.isOpened():
         _, frame = camera.read()
         preprocessed = self.framework.preprocess(frame)
         feed_dict = {self.inp: [preprocessed]}
         net_out = self.sess.run(self.out,feed_dict)[0]
-        processed = self.framework.postprocess(net_out, frame, False)
+        processed, textBuff = self.framework.postprocess(net_out, frame, False)
         cv2.imshow('', processed)
         elapsed += 1
         if elapsed % 5 == 0:
@@ -79,6 +96,22 @@ def camera(self, file):
             sys.stdout.flush()
         choice = cv2.waitKey(1)
         if choice == 27: break
+
+
+        if os.path.isfile(file):
+            img_name = os.path.join(outfolder, '{0}.jpg'.format(i))
+
+            # Removing trailing comma+newline adding json list terminator.
+            if len(textBuff) > 2:
+                textBuff = textBuff[:-2]
+            textBuff += "]"
+            textFile = os.path.splitext(img_name)[0] + ".json"
+            with open(textFile, 'w') as f:
+                f.write(textBuff)
+
+            # cv2.imwrite(img_name, processed)
+            outvideo.write(processed)
+        i += 1
 
     sys.stdout.write('\n')
     camera.release()

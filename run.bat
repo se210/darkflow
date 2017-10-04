@@ -1,0 +1,1 @@
+python flow --model cfg\yolo.cfg --load bin\yolo.weights --json --gpu 0.85 --saveVideo True %1 %2
